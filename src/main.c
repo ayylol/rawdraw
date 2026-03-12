@@ -1,30 +1,33 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h> // for rand
 #include <string.h>
+
+#include "rawdraw.h"
 
 #define WIDTH 1200
 #define HEIGHT 800
-uint32_t buff[WIDTH*HEIGHT];
+uint32_t image[WIDTH*HEIGHT];
 
 char file_name[64] = "out.ppm";
 
 int32_t save_ppm(char* file_name, uint32_t *buffer, 
                   uint32_t width, uint32_t height);
 
-int32_t main(int argc, char* argv[]){
+int32_t main(int argc, char* argv[]) {
   if (argc == 2){
     strcpy(file_name, argv[1]); 
   }
-  for (uint32_t i=0; i < WIDTH*HEIGHT; i++){
-    buff[i]=rand();
-  }
-  save_ppm(file_name, buff, WIDTH, HEIGHT);
+  image_t img = {.buffer=image, .w=WIDTH, .h=HEIGHT};
+  rawdraw_fill(img, BLUE);
+  point_t p1 = {500, 500};
+  point_t p2 = {600, 950};
+  rawdraw_rect(img, p1, p2, GREEN);
+  save_ppm(file_name, image, WIDTH, HEIGHT);
   return 0;
 }
 
 int32_t save_ppm(char* file_name, uint32_t *buffer,
-                  uint32_t width, uint32_t height){
+                  uint32_t width, uint32_t height) {
   FILE* output_file = fopen(file_name, "w");
   if (output_file == NULL) {
     printf("ERROR OPENING %s\n", file_name);
