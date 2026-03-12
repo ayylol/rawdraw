@@ -1,8 +1,6 @@
 #ifndef INCLUDE_RAWDRAW_H_
 #define INCLUDE_RAWDRAW_H_
 
-#include <stdlib.h>
-
 // CONSTANTS AND TYPES
 typedef struct {
   uint32_t* buffer;
@@ -43,12 +41,17 @@ void rawdraw_fill(image_t img, color_t col) {
 }
 
 void rawdraw_line(image_t img, point_t p1, point_t p2, color_t col){
-  if (abs((int32_t)p2.y - p1.y) < abs((int32_t)p2.x - p1.x))
+  int32_t abs_y = (int32_t)p2.y-p1.y;
+  abs_y = abs_y>0 ? abs_y : -abs_y;
+  int32_t abs_x = (int32_t)p2.x-p1.x;
+  abs_x = abs_x>0 ? abs_x : -abs_x;
+  if (abs_y < abs_x){
     if (p1.x > p2.x){
       _rawdraw_line_low(img, (point_t){p2.x, p2.y}, (point_t){p1.x, p1.y}, col);
     } else {
       _rawdraw_line_low(img, (point_t){p1.x, p1.y}, (point_t){p2.x, p2.y}, col);
     }
+  }
   else {
     if (p1.y > p2.y){
       _rawdraw_line_high(img, (point_t){p2.x, p2.y}, (point_t){p1.x, p1.y}, col);
