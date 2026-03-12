@@ -1,4 +1,4 @@
-TARGET:=a.out
+TARGET:=rawdraw
 
 # Compiler Stuff
 CC:=gcc
@@ -19,7 +19,7 @@ OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 INC_DIRS = $(addprefix -I , $(SRCDIRS))
 
 .PHONY: all debug release echo clean dremake rremake
-all: release
+all: debug
 
 debug: CFLAGS+=$(DBGFLAGS)
 debug: $(TARGET)
