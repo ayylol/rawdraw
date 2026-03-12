@@ -4,9 +4,9 @@
 
 #include "rawdraw.h"
 
-#define WIDTH 1200
-#define HEIGHT 800
-uint32_t image[WIDTH*HEIGHT];
+#define WIDTH 400
+#define HEIGHT 300
+uint32_t buffer[WIDTH*HEIGHT];
 
 char file_name[64] = "out.ppm";
 
@@ -17,12 +17,10 @@ int32_t main(int argc, char* argv[]) {
   if (argc == 2){
     strcpy(file_name, argv[1]); 
   }
-  image_t img = {.buffer=image, .w=WIDTH, .h=HEIGHT};
-  rawdraw_fill(img, BLUE);
-  point_t p1 = {500, 500};
-  point_t p2 = {600, 950};
-  rawdraw_rect(img, p1, p2, GREEN);
-  save_ppm(file_name, image, WIDTH, HEIGHT);
+  image_t img = {.buffer=buffer, .w=WIDTH, .h=HEIGHT};
+  rawdraw_fill(img, BLACK);
+  rawdraw_line(img, (point_t){30,30}, (point_t){200,150}, BLUE);
+  save_ppm(file_name, img.buffer, img.w, img.h);
   return 0;
 }
 
