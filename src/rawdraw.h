@@ -1,6 +1,8 @@
 #ifndef INCLUDE_RAWDRAW_H_
 #define INCLUDE_RAWDRAW_H_
 
+#include <stdlib.h>
+
 // CONSTANTS AND TYPES
 typedef struct {
   uint32_t* buffer;
@@ -21,9 +23,7 @@ typedef uint32_t color_t;
 
 // PRIVATE FUNCTION DECLARATIONS
 static inline uint32_t _rawdraw_get_i(image_t img, uint16_t x, uint16_t y);
-
-void _rawdraw_line_low(image_t img, point_t p1, point_t p2, color_t col);
-void _rawdraw_line_high(image_t img, point_t p1, point_t p2, color_t col);
+static inline void _rawdraw_swap_points(point_t* p1, point_t* p2);
 
 // INTERFACE
 void rawdraw_rect(image_t img, point_t p1, point_t p2, color_t col) {
@@ -41,23 +41,35 @@ void rawdraw_fill(image_t img, color_t col) {
 }
 
 void rawdraw_line(image_t img, point_t p1, point_t p2, color_t col){
-  int32_t abs_y = (int32_t)p2.y-p1.y;
-  abs_y = abs_y>0 ? abs_y : -abs_y;
-  int32_t abs_x = (int32_t)p2.x-p1.x;
-  abs_x = abs_x>0 ? abs_x : -abs_x;
-  if (abs_y < abs_x){
-    if (p1.x > p2.x){
-      _rawdraw_line_low(img, (point_t){p2.x, p2.y}, (point_t){p1.x, p1.y}, col);
-    } else {
-      _rawdraw_line_low(img, (point_t){p1.x, p1.y}, (point_t){p2.x, p2.y}, col);
-    }
+  bool low=true;
+  if (abs((int32_t)p2.y - p1.y) < abs((int32_t)p2.x - p1.x)){
+    if (p1.x > p2.x){ _rawdraw_swap_points(&p1, &p2); }
   }
   else {
-    if (p1.y > p2.y){
-      _rawdraw_line_high(img, (point_t){p2.x, p2.y}, (point_t){p1.x, p1.y}, col);
-    } else { 
-      _rawdraw_line_high(img, (point_t){p1.x, p1.y}, (point_t){p2.x, p2.y}, col);
-    }
+    low=false;
+    if (p1.y > p2.y){ _rawdraw_swap_points(&p1, &p2); }
+  }
+  int32_t d_axis1=p2.y-p1.y;
+  int32_t d_axis2=p2.x-p1.x;
+  int16_t di=1;
+  if (d_axis1<0){
+    di=-1;
+    d_axis1=-d_axis1;
+  }
+  int32_t D=2*d_axis1-d_axis2;
+  int16_t j = low ? p1.y : p1.x;
+  int16_t start = low ? p1.x : p1.y;
+  int16_t end = low ? p2.x : p2.y;
+  for (int i=start; i<end; i++){
+      int16_t x = low ? i : j;
+      int16_t y = low ? j : i;
+      img.buffer[_rawdraw_get_i(img, x, y)] = col;
+      if (D>0){
+        j=j+di;
+        D+=2*(d_axis1-d_axis2);
+      } else {
+        D+=2*d_axis1;
+      }
   }
 }
 
@@ -66,45 +78,10 @@ static inline uint32_t _rawdraw_get_i(image_t img, uint16_t x, uint16_t y){
   return x+img.w*y; 
 }
 
-void _rawdraw_line_low(image_t img, point_t p1, point_t p2, color_t col){
-  int32_t dx=p2.x-p1.x;
-  int32_t dy=p2.y-p1.y;
-  int16_t yi=1;
-  if (dy<0){
-    yi=-1;
-    dy=-dy;
-  }
-  int32_t D=2*dy-dx;
-  int16_t y=p1.y;
-  for (int x=p1.x; x<p2.x; x++){
-      img.buffer[_rawdraw_get_i(img, x, y)] = col;
-      if (D>0){
-        y=y+yi;
-        D+=2*(dy-dx);
-      } else {
-        D+=2*dy;
-      }
-  }
-}
-void _rawdraw_line_high(image_t img, point_t p1, point_t p2, color_t col){
-  int32_t dx=p2.x-p1.x;
-  int32_t dy=p2.y-p1.y;
-  int16_t xi=1;
-  if (dx<0){
-    xi=-1;
-    dx=-dx;
-  }
-  int32_t D=2*dx-dy;
-  int16_t x=p1.x;
-  for (int y=p1.y; x<p2.y; y++){
-      img.buffer[_rawdraw_get_i(img, x, y)] = col;
-      if (D>0){
-        x=x+xi;
-        D+=2*(dx-dy);
-      } else {
-        D+=2*dx;
-      }
-  }
+static inline void _rawdraw_swap_points(point_t* p1, point_t* p2){
+  point_t temp_p=*p1;
+  *p1=*p2;
+  *p2=temp_p;
 }
 
 #endif // INCLUDE_RAWDRAW_H_
