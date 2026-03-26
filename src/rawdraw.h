@@ -2,7 +2,6 @@
 #define INCLUDE_RAWDRAW_H_
 
 #include <stdint.h>
-#include <stdbool.h>
 
 // CONSTANTS AND TYPES
 typedef struct {
@@ -16,11 +15,14 @@ typedef struct {
 
 typedef uint32_t color_t;
 
-#define BLACK 0x00000000
-#define WHITE 0x00FFFFFF
-#define RED   0x00FF0000
-#define GREEN 0x0000FF00
-#define BLUE  0x000000FF
+#define BLACK   0x00000000
+#define WHITE   0x00FFFFFF
+#define RED     0x00FF0000
+#define GREEN   0x0000FF00
+#define BLUE    0x000000FF
+#define MAGENTA 0x00FF00FF
+#define YELLOW  0x00FFFF00
+#define CYAN    0x0000FFFF
 
 // INTERFACE
 void rawdraw_fill(image_t img, color_t col);

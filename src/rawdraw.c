@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 // PRIVATE FUNCTION IMPLEMENTATIONS
 static inline uint32_t rawdraw_get_i(image_t img, int32_t x, int32_t y){
