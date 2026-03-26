@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "rawdraw.h"
@@ -19,11 +20,28 @@ int32_t main(int argc, char* argv[]) {
   }
   image_t img = {.buffer=buffer, .w=WIDTH, .h=HEIGHT};
   rawdraw_fill(img, BLACK);
+  /*
   point_t m = {.x=WIDTH/2, .y=HEIGHT/2};
+  point_t p1 = {.x=30, .y=20};
+  point_t p2 = {.x=10, .y=120};
   rawdraw_line(img, m, (point_t){WIDTH, HEIGHT}, RED);
   rawdraw_line(img, m, (point_t){WIDTH, 0}, GREEN);
   rawdraw_line(img, m, (point_t){0, HEIGHT}, BLUE);
   rawdraw_line(img, m, (point_t){0, 0}, WHITE);
+  rawdraw_tri(img, m, p1, p2, RED);
+  rawdraw_rect(img, m, m, GREEN);
+  rawdraw_rect(img, p1, p1, BLUE);
+  rawdraw_rect(img, p2, p2, WHITE);
+  */
+  point_t tri[3];
+  for (int i=0; i<10; i++){
+    for (int j=0; j<3; j++){
+      int32_t x = rand()%img.w;
+      int32_t y = rand()%img.h;
+      tri[j]=(point_t){.x=x,.y=y};
+    }
+    rawdraw_tri(img, tri[0], tri[1], tri[2], rand());
+  }
   save_ppm(file_name, img.buffer, img.w, img.h);
   return 0;
 }
