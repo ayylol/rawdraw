@@ -29,5 +29,8 @@ void rawdraw_fill(image_t img, color_t col);
 void rawdraw_rect(image_t img, point_t p1, point_t p2, color_t col);
 void rawdraw_line(image_t img, point_t p1, point_t p2, color_t col);
 void rawdraw_tri(image_t img, point_t p1, point_t p2, point_t p3, color_t col);
+static inline uint32_t rawdraw_get_i(image_t img, int32_t x, int32_t y){
+  return x+img.w*y;
+}
 
 #endif // INCLUDE_RAWDRAW_H_

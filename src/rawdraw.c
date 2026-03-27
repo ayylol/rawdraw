@@ -5,17 +5,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// PRIVATE FUNCTION IMPLEMENTATIONS
-static inline uint32_t rawdraw_get_i(image_t img, int32_t x, int32_t y){
-  return x+img.w*y; 
-}
 
+// PRIVATE FUNCTION IMPLEMENTATIONS
 static inline void rawdraw_swap_points(point_t* p1, point_t* p2){
   point_t temp_p=*p1;
   *p1=*p2;
   *p2=temp_p;
 }
 
+// PUBLIC FUNCTION IMPLEMENTATIONS
 void rawdraw_rect(image_t img, point_t p1, point_t p2, color_t col) {
   p2.x=p2.x<img.w ? p2.x : img.w;
   p2.y=p2.y<img.h ? p2.y : img.h;
@@ -26,7 +24,6 @@ void rawdraw_rect(image_t img, point_t p1, point_t p2, color_t col) {
   }
 }
 
-// PUBLIC FUNCTION IMPLEMENTATIONS
 void rawdraw_fill(image_t img, color_t col) {
   rawdraw_rect(img, (point_t){0,0}, (point_t){img.w-1,img.h-1}, col);
 }
