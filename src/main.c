@@ -2,12 +2,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ncurses.h>
+#include <time.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 #include "rawdraw.h"
 
-#define WIDTH 174
-#define HEIGHT 44
+//#define WIDTH 174
+//#define HEIGHT 44
+#define WIDTH 1420
+#define HEIGHT 840
 uint32_t buffer[WIDTH*HEIGHT];
 
 color_t colors[8] = {BLACK,WHITE,RED,GREEN,BLUE,MAGENTA,YELLOW,CYAN};
@@ -17,7 +21,6 @@ char file_name[64] = "out.ppm";
 int32_t save_ppm(char* file_name, uint32_t *buffer, 
                   uint32_t width, uint32_t height);
 
-void init_ncurses();
 void draw_frame(image_t img);
 
 int32_t main(int argc, char* argv[]) {
@@ -26,33 +29,52 @@ int32_t main(int argc, char* argv[]) {
   }
   image_t img = {.buffer=buffer, .w=WIDTH, .h=HEIGHT};
 
-  char ch=' ';
-  init_ncurses();
-  while( ch != 'q' ) {
-      draw_frame(img);
-      for (int32_t i=0; i < img.w; i++){
-        for (int32_t j=0; j < img.h; j++){
-          ch='#';
-          int8_t col_pair=1;
-          switch(img.buffer[rawdraw_get_i(img, i, j)]){
-            case WHITE:   col_pair=1; break;
-            case RED:     col_pair=2; break;
-            case GREEN:   col_pair=3; break;
-            case BLUE:    col_pair=4; break;
-            case MAGENTA: col_pair=5; break;
-            case YELLOW:  col_pair=6; break;
-            case CYAN:    col_pair=7; break;
-            case BLACK:   ch=' ';     break;
-          };
-          attron(COLOR_PAIR(col_pair));
-          mvaddch(j,i, ch|A_BOLD);
-        }
-      }
-      refresh();
-      save_ppm(file_name, img.buffer, img.w, img.h);
-      ch = getch();
+  Display *display;
+  Window window;
+  XEvent event;
+  int screen_num;
+
+  display = XOpenDisplay(NULL);
+  if (display == NULL) {
+    fprintf(stderr, "Cannot open display\n");
+    exit(1);
   }
-  endwin();
+
+  screen_num = DefaultScreen(display);
+  window = XCreateSimpleWindow(display, RootWindow(display, screen_num), 800, 400, 500, 300, 1,
+                         BlackPixel(display, screen_num), WhitePixel(display, screen_num));
+  XSelectInput(display, window, ExposureMask | KeyPressMask);
+  XMapWindow(display, window);
+
+  XClassHint* classHint;
+  XStoreName(display, window, "rawdraw");
+  classHint = XAllocClassHint();
+  if (classHint) {
+      classHint->res_name = "rawdraw";
+      classHint->res_class = "FLOAT";
+  }
+  XSetClassHint(display, window, classHint);
+  XFree(classHint);
+
+  GC gc = XCreateGC(display, window, 0, NULL);
+  Pixmap pm = XCreatePixmap(display, window, WIDTH, HEIGHT, 24);
+  XImage *image = XCreateImage(display, DefaultVisual(display, 0), 24, ZPixmap, 0, (char*) img.buffer, WIDTH, HEIGHT, 32, 0); 
+
+  while (true) {
+    draw_frame(img);
+    XPutImage(display, pm, gc, image, 0,0,0,0, WIDTH, HEIGHT);
+    XCopyArea(display, pm, window, gc, 0, 0, WIDTH, HEIGHT, 10, 10);
+    XNextEvent(display, &event);
+    if (event.type == Expose) {
+      XCopyArea(display, pm, window, gc, 0, 0, WIDTH, HEIGHT, 10, 10);
+    }
+    if (event.type == KeyPress){
+      if (XLookupKeysym(&event.xkey, 0) == 0xff1b){ // ESC PRESSED
+        break;
+      }
+    }
+  }
+  XCloseDisplay(display);
 
   return 0;
 }
@@ -68,23 +90,6 @@ void draw_frame(image_t img){
     }
     rawdraw_tri(img, tri[0], tri[1], tri[2], colors[rand()%8]);
   }
-}
-
-void init_ncurses(){
-  initscr();
-  start_color();
-  cbreak();
-  keypad(stdscr, true);
-  noecho();
-  curs_set(0);
-  init_pair(1, COLOR_WHITE, COLOR_BLACK);
-  init_pair(2, COLOR_RED, COLOR_BLACK);
-  init_pair(3, COLOR_GREEN, COLOR_BLACK);
-  init_pair(4, COLOR_BLUE, COLOR_BLACK);
-  init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
-  init_pair(6, COLOR_YELLOW, COLOR_BLACK);
-  init_pair(7, COLOR_CYAN, COLOR_BLACK);
-
 }
 
 int32_t save_ppm(char* file_name, uint32_t *buffer,

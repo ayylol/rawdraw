@@ -5,7 +5,7 @@ CC:=gcc
 CFLAGS=-Wall $(LIBFLAGS)
 DBGFLAGS:=-g -Wextra -Werror
 RLSFLAGS:=-O2
-LIBFLAGS:=-lncursesw
+LIBFLAGS:=-lX11
 
 # Directories
 SRCDIR:=src
