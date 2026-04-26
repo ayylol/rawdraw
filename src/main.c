@@ -8,8 +8,7 @@
 
 #include "rawdraw.h"
 
-//#define WIDTH 174
-//#define HEIGHT 44
+#define DRAW_TICK 0.5
 #define WIDTH 1420
 #define HEIGHT 840
 uint32_t buffer[WIDTH*HEIGHT];
@@ -41,7 +40,7 @@ int32_t main(int argc, char* argv[]) {
   }
 
   screen_num = DefaultScreen(display);
-  window = XCreateSimpleWindow(display, RootWindow(display, screen_num), 800, 400, 500, 300, 1,
+  window = XCreateSimpleWindow(display, RootWindow(display, screen_num), 240, 110, 1440, 860, 1,
                          BlackPixel(display, screen_num), WhitePixel(display, screen_num));
   XSelectInput(display, window, ExposureMask | KeyPressMask);
   XMapWindow(display, window);
@@ -60,14 +59,22 @@ int32_t main(int argc, char* argv[]) {
   Pixmap pm = XCreatePixmap(display, window, WIDTH, HEIGHT, 24);
   XImage *image = XCreateImage(display, DefaultVisual(display, 0), 24, ZPixmap, 0, (char*) img.buffer, WIDTH, HEIGHT, 32, 0); 
 
+  clock_t t;
+  double draw_t=DRAW_TICK;
   while (true) {
-    draw_frame(img);
+    clock_t curr_t=clock();
+    double delta_t=(double)(curr_t-t)/CLOCKS_PER_SEC;
+    t=curr_t;
+    draw_t+=delta_t;
+
+    if (draw_t >= DRAW_TICK){
+      draw_frame(img);
+      draw_t=0.0;
+    }
     XPutImage(display, pm, gc, image, 0,0,0,0, WIDTH, HEIGHT);
     XCopyArea(display, pm, window, gc, 0, 0, WIDTH, HEIGHT, 10, 10);
+
     XNextEvent(display, &event);
-    if (event.type == Expose) {
-      XCopyArea(display, pm, window, gc, 0, 0, WIDTH, HEIGHT, 10, 10);
-    }
     if (event.type == KeyPress){
       if (XLookupKeysym(&event.xkey, 0) == 0xff1b){ // ESC PRESSED
         break;
