@@ -37,8 +37,7 @@ void X11Destroy(XWrapper *x_ctx){
   if (x_ctx->image_binded){
     XFreePixmap(x_ctx->display, x_ctx->pm);
     XFreeGC(x_ctx->display, x_ctx->gc);
-    // XDestroyImage also frees the buffer which we don't know if we can free
-    free(x_ctx->image);
+    XFree(x_ctx->image);
   }
   XCloseDisplay(x_ctx->display);
 }
