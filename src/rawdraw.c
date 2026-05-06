@@ -16,8 +16,12 @@ static inline void rawdraw_swap_points(point_t* p1, point_t* p2){
 
 // PUBLIC FUNCTION IMPLEMENTATIONS
 void rawdraw_rect(image_t img, point_t p1, point_t p2, color_t col) {
-  p2.x=p2.x<img.w ? p2.x : img.w;
-  p2.y=p2.y<img.h ? p2.y : img.h;
+  // TODO: this bound checking probably needs more thought put into it,
+  // but at least it doesn't seg fault now
+  p2.x=p2.x<img.w ? p2.x : img.w-1;
+  p2.y=p2.y<img.h ? p2.y : img.h-1;
+  p1.x=p1.x>=0 ? p1.x : 0;
+  p1.y=p1.y>=0 ? p1.y : 0;
   for (int32_t x=p1.x; x<=p2.x; x++){
     for (int32_t y=p1.y; y<=p2.y; y++){
       img.buffer[rawdraw_get_i(img, x, y)]=col;
