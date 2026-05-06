@@ -23,6 +23,7 @@ typedef uint32_t color_t;
 #define MAGENTA 0x00FF00FF
 #define YELLOW  0x00FFFF00
 #define CYAN    0x0000FFFF
+extern color_t colors[8];
 
 // INTERFACE
 void rawdraw_fill(image_t img, color_t col);

@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 
+color_t colors[8] = {BLACK,WHITE,RED,GREEN,BLUE,MAGENTA,YELLOW,CYAN};
 // PRIVATE FUNCTION IMPLEMENTATIONS
 static inline void rawdraw_swap_points(point_t* p1, point_t* p2){
   point_t temp_p=*p1;

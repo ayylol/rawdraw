@@ -3,23 +3,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 
 #include "rawdraw.h"
+#include "xwrapper.h"
 
 #define DRAW_TICK 0.5
 #define WIDTH 1420
 #define HEIGHT 840
 uint32_t buffer[WIDTH*HEIGHT];
-
-color_t colors[8] = {BLACK,WHITE,RED,GREEN,BLUE,MAGENTA,YELLOW,CYAN};
-
 char file_name[64] = "out.ppm";
 
 int32_t save_ppm(char* file_name, uint32_t *buffer, 
                   uint32_t width, uint32_t height);
-
 void draw_frame(image_t img);
 
 int32_t main(int argc, char* argv[]) {
@@ -28,61 +23,27 @@ int32_t main(int argc, char* argv[]) {
   }
   image_t img = {.buffer=buffer, .w=WIDTH, .h=HEIGHT};
 
-  Display *display;
-  Window window;
-  XEvent event;
-  int screen_num;
+  XWrapper x_ctx;
+  X11Init(&x_ctx);
+  X11BindBuffer(&x_ctx, img.buffer, WIDTH, HEIGHT);
 
-  display = XOpenDisplay(NULL);
-  if (display == NULL) {
-    fprintf(stderr, "Cannot open display\n");
-    exit(1);
-  }
-
-  screen_num = DefaultScreen(display);
-  window = XCreateSimpleWindow(display, RootWindow(display, screen_num), 240, 110, 1440, 860, 1,
-                         BlackPixel(display, screen_num), WhitePixel(display, screen_num));
-  XSelectInput(display, window, ExposureMask | KeyPressMask);
-  XMapWindow(display, window);
-
-  XClassHint* classHint;
-  XStoreName(display, window, "rawdraw");
-  classHint = XAllocClassHint();
-  if (classHint) {
-      classHint->res_name = "rawdraw";
-      classHint->res_class = "FLOAT";
-  }
-  XSetClassHint(display, window, classHint);
-  XFree(classHint);
-
-  GC gc = XCreateGC(display, window, 0, NULL);
-  Pixmap pm = XCreatePixmap(display, window, WIDTH, HEIGHT, 24);
-  XImage *image = XCreateImage(display, DefaultVisual(display, 0), 24, ZPixmap, 0, (char*) img.buffer, WIDTH, HEIGHT, 32, 0); 
-
-  clock_t t;
+  clock_t t=clock();
   double draw_t=DRAW_TICK;
+  Events events;
   while (true) {
     clock_t curr_t=clock();
     double delta_t=(double)(curr_t-t)/CLOCKS_PER_SEC;
     t=curr_t;
     draw_t+=delta_t;
-
     if (draw_t >= DRAW_TICK){
       draw_frame(img);
       draw_t=0.0;
     }
-    XPutImage(display, pm, gc, image, 0,0,0,0, WIDTH, HEIGHT);
-    XCopyArea(display, pm, window, gc, 0, 0, WIDTH, HEIGHT, 10, 10);
-
-    XNextEvent(display, &event);
-    if (event.type == KeyPress){
-      if (XLookupKeysym(&event.xkey, 0) == 0xff1b){ // ESC PRESSED
-        break;
-      }
-    }
+    X11DrawFrame(&x_ctx);
+    X11PollEvents(&x_ctx, &events);
+    if (events.exit) break;
   }
-  XCloseDisplay(display);
-
+  X11Destroy(&x_ctx);
   return 0;
 }
 
