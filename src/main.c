@@ -56,7 +56,7 @@ void draw_frame(image_t img){
       int32_t y = rand()%img.h;
       tri[j]=(point_t){.x=x,.y=y};
     }
-    rawdraw_tri(img, tri[0], tri[1], tri[2], colors[rand()%8]);
+    rawdraw_tri(img, tri[0], tri[1], tri[2], colors[2+rand()%6]);
   }
 }
 

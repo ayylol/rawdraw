@@ -33,12 +33,52 @@ void rawdraw_fill(image_t img, color_t col) {
   rawdraw_rect(img, (point_t){0,0}, (point_t){img.w-1,img.h-1}, col);
 }
 
-void rawdraw_tri(image_t img, point_t p1, point_t p2, point_t p3, color_t col){
-  rawdraw_line(img, p1, p2, col);
-  rawdraw_line(img, p1, p3, col);
-  rawdraw_line(img, p3, p2, col);
+void rawdraw_point(image_t img, point_t p, int32_t dim, color_t col){
+  point_t p1=p;
+  p1.x-=(dim-1)/2;
+  p1.y-=(dim-1)/2;
+  point_t p2=p;
+  p2.x+=(dim-1)/2 + (dim%2 ? 0 : 1);
+  p2.y+=(dim-1)/2 + (dim%2 ? 0 : 1);
+  rawdraw_rect(img,p1,p2,col);
 }
 
+bool is_left_of(point_t p1, point_t p2, point_t p3){
+  point_t v1=(point_t){-(p2.y-p1.y),p2.x-p1.x};
+  point_t v2=(point_t){p3.x-p1.x,p3.y-p1.y};
+  // Take dot product
+  int32_t dot = v1.x*v2.x+v1.y*v2.y;
+  return dot>0;
+}
+
+// Source - https://stackoverflow.com/a/3437484
+// Posted by David Titarenco, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-05-10, License - CC BY-SA 4.0
+ #define max(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+ #define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
+void rawdraw_tri(image_t img, point_t p1, point_t p2, point_t p3, color_t col){
+  point_t lb = {min(min(p1.x,p2.x),p3.x),min(min(p1.y,p2.y),p3.y)};
+  point_t ub = {max(max(p1.x,p2.x),p3.x),max(max(p1.y,p2.y),p3.y)};
+  for (int32_t x=lb.x; x<ub.x; x++){
+    for (int32_t y=lb.y; y<ub.y; y++){
+      point_t p4 = (point_t){x,y};
+      bool inside=
+        (is_left_of(p1,p2,p4)&&is_left_of(p2,p3,p4)&&is_left_of(p3,p1,p4))
+        || !(is_left_of(p1,p2,p4)||is_left_of(p2,p3,p4)||is_left_of(p3,p1,p4));
+      if (inside){ img.buffer[rawdraw_get_i(img, x, y)]=col; }
+      //img.buffer[rawdraw_get_i(img, x, y)]=inside ? col : WHITE;
+    }
+  }
+}
+
+// TODO: ADD BOUNDS CHECKING!!!!!!!!!!!
 void rawdraw_line(image_t img, point_t p1, point_t p2, color_t col){
   bool low=true;
   if (abs(p2.y - p1.y) < abs(p2.x - p1.x)){
