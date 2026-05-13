@@ -4,10 +4,11 @@
 #include <string.h>
 #include <time.h>
 
+#include "linalg.h"
 #include "rawdraw.h"
 #include "xwrapper.h"
 
-#define DRAW_TICK 0.5
+#define DRAW_TICK 0.0167
 #define WIDTH 1420
 #define HEIGHT 840
 uint32_t buffer[WIDTH*HEIGHT];
@@ -16,6 +17,9 @@ char file_name[64] = "out.ppm";
 int32_t save_ppm(char* file_name, uint32_t *buffer, 
                   uint32_t width, uint32_t height);
 void draw_frame(image_t img);
+
+static inline ivec2_t to_ivec2(point_t a){ return (ivec2_t){.x=a.x,.y=a.y}; }
+static inline point_t to_point(ivec2_t a){ return (point_t){.x=a.x,.y=a.y}; }
 
 int32_t main(int argc, char* argv[]) {
   if (argc == 2){
@@ -47,17 +51,20 @@ int32_t main(int argc, char* argv[]) {
   return 0;
 }
 
+int s = 0;
 void draw_frame(image_t img){
   rawdraw_fill(img, BLACK);
-  point_t tri[3];
-  for (int i=0; i<4; i++){
-    for (int j=0; j<3; j++){
-      int32_t x = rand()%img.w;
-      int32_t y = rand()%img.h;
-      tri[j]=(point_t){.x=x,.y=y};
-    }
-    rawdraw_tri(img, tri[0], tri[1], tri[2], colors[2+rand()%6]);
-  }
+  ivec2_t tri[3]={
+    {.x=0,.y=0},
+    {.x=0,.y=0},
+    {.x=0,.y=0},
+  };
+  ivec2_t center= {.x=img.w/2,.y=img.h/2};
+  tri[0]=add_v2(add_v2(tri[0], (ivec2_t){0,-(s%300)}),center);
+  tri[1]=add_v2(add_v2(tri[1], (ivec2_t){(s%300),0}),center);
+  tri[2]=add_v2(add_v2(tri[2], (ivec2_t){-(s%300),0}),center);
+  rawdraw_tri(img, to_point(tri[0]), to_point(tri[1]), to_point(tri[2]),RED);
+  s++;
 }
 
 int32_t save_ppm(char* file_name, uint32_t *buffer,
