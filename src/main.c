@@ -34,6 +34,7 @@ int32_t main(int argc, char* argv[]) {
   clock_t t=clock();
   double draw_t=DRAW_TICK;
   Events events;
+  
   while (true) {
     clock_t curr_t=clock();
     double delta_t=(double)(curr_t-t)/CLOCKS_PER_SEC;
@@ -51,20 +52,60 @@ int32_t main(int argc, char* argv[]) {
   return 0;
 }
 
-int s = 0;
+int s=0;
+int s1=100;
+bool growing=true;
 void draw_frame(image_t img){
   rawdraw_fill(img, BLACK);
-  ivec2_t tri[3]={
-    {.x=0,.y=0},
-    {.x=0,.y=0},
-    {.x=0,.y=0},
+  ivec3_t quad[6*6]={
+    // FRONT
+    {.x=-1,.y=-1,.z=1}, {.x=1,.y=-1,.z=1}, {.x=1,.y=1,.z=1},  
+    {.x=-1,.y=-1,.z=1}, {.x=1,.y=1,.z=1},  {.x=-1,.y=1,.z=1}, 
+    // BACK
+    {.x=-1,.y=-1,.z=-1},  {.x=1,.y=1,.z=-1},  {.x=1,.y=-1,.z=-1}, 
+    {.x=-1,.y=-1,.z=-1},  {.x=-1,.y=1,.z=-1}, {.x=1,.y=1,.z=-1},
+    // LEFT
+    {.x=-1,.y=-1,.z=-1},   {.x=-1,.y=1,.z=1}, {.x=-1,.y=1,.z=-1}, 
+    {.x=-1,.y=-1,.z=-1},    {.x=-1,.y=-1,.z=1}, {.x=-1,.y=1,.z=1},
+    // RIGHT
+    {.x=1,.y=-1,.z=1},  {.x=1,.y=1,.z=-1},  {.x=1,.y=1,.z=1},
+    {.x=1,.y=-1,.z=1},  {.x=1,.y=-1,.z=-1},  {.x=1,.y=1,.z=-1},
   };
-  ivec2_t center= {.x=img.w/2,.y=img.h/2};
-  tri[0]=add_v2(add_v2(tri[0], (ivec2_t){0,-(s%300)}),center);
-  tri[1]=add_v2(add_v2(tri[1], (ivec2_t){(s%300),0}),center);
-  tri[2]=add_v2(add_v2(tri[2], (ivec2_t){-(s%300),0}),center);
-  rawdraw_tri(img, to_point(tri[0]), to_point(tri[1]), to_point(tri[2]),RED);
-  s++;
+  ivec3_t center= {.x=img.w/2,.y=img.h/2,.z=0};
+  ivec3_t camera= {.x=0,.y=0,.z=-150};
+  (void) camera;
+  imat3_t rot=rot_y_m3(s);
+  //imat3_t scale=scale_m3(s1);
+  for (int i=0; i<6*4;i++){
+    //quad[i]=//add_v3(div_sv3(SIN_RANGE, mul_mv3(model,quad[i])), center);
+    //quad[i]=mul_mv3(scale,quad[i]);
+    quad[i]=mul_sv3(s1,quad[i]);
+    quad[i]=div_sv3(SIN_RANGE, mul_mv3(rot,quad[i]));
+    quad[i]=add_v3(quad[i],camera);
+    quad[i]=mul_sv3(8192*2,quad[i]);
+    quad[i]=div_sv3(quad[i].z/(4*8192),quad[i]);
+    quad[i]=div_sv3(8192*2,quad[i]);
+    quad[i]=mul_sv3(20,quad[i]);
+    quad[i]=add_v3(quad[i],center);
+    //quad[i]=mul_sv3(2048,quad[i]);
+    //quad[i]=div_sv3(2048,quad[i]);
+    //quad[i]=mul_mv3(scale,quad[i]);
+
+    //quad[i]=mul_sv3(quad[i].z,quad[i]);
+    //quad[i]=div_sv3(quad[i].z,quad[i]);
+  }
+  for (int i=0;i<23;i+=3){
+    rawdraw_tri(img, to_point(v3_to_v2(quad[i])),   to_point(v3_to_v2(quad[i+1])),  to_point(v3_to_v2(quad[i+2])),colors[2+(i/6)%6]);
+  }
+  s+=i16_PI/300;
+  /*
+  if (growing){
+    s1+=1;
+  }else{
+    s1-=1;
+  }
+  if (s1>250 || s1<10) growing=!growing;
+  */
 }
 
 int32_t save_ppm(char* file_name, uint32_t *buffer,

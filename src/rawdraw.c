@@ -48,7 +48,7 @@ bool is_left_of(point_t p1, point_t p2, point_t p3){
   point_t v2=(point_t){p3.x-p1.x,p3.y-p1.y};
   // Take dot product
   int32_t dot = v1.x*v2.x+v1.y*v2.y;
-  return dot>0;
+  return dot>=0;
 }
 
 // Source - https://stackoverflow.com/a/3437484
@@ -62,18 +62,19 @@ bool is_left_of(point_t p1, point_t p2, point_t p3){
    ({ __typeof__ (a) _a = (a); \
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
+ #define clamp(a,l,u) \
+   min(max(a,l),u)    \
 
 void rawdraw_tri(image_t img, point_t p1, point_t p2, point_t p3, color_t col){
-  point_t lb = {min(min(p1.x,p2.x),p3.x),min(min(p1.y,p2.y),p3.y)};
-  point_t ub = {max(max(p1.x,p2.x),p3.x),max(max(p1.y,p2.y),p3.y)};
+  point_t lb = {clamp(min(min(p1.x,p2.x),p3.x),0,img.w-1),clamp(min(min(p1.y,p2.y),p3.y),0,img.h-1)};
+  point_t ub = {clamp(max(max(p1.x,p2.x),p3.x),0,img.w-1),clamp(max(max(p1.y,p2.y),p3.y),0,img.h-1)};
   for (int32_t x=lb.x; x<ub.x; x++){
     for (int32_t y=lb.y; y<ub.y; y++){
       point_t p4 = (point_t){x,y};
       bool inside=
-        (is_left_of(p1,p2,p4)&&is_left_of(p2,p3,p4)&&is_left_of(p3,p1,p4))
-        || !(is_left_of(p1,p2,p4)||is_left_of(p2,p3,p4)||is_left_of(p3,p1,p4));
+        (is_left_of(p1,p2,p4)&&is_left_of(p2,p3,p4)&&is_left_of(p3,p1,p4));
+        //|| !(is_left_of(p1,p2,p4)||is_left_of(p2,p3,p4)||is_left_of(p3,p1,p4));
       if (inside){ img.buffer[rawdraw_get_i(img, x, y)]=col; }
-      //img.buffer[rawdraw_get_i(img, x, y)]=inside ? col : WHITE;
     }
   }
 }
