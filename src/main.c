@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <ncurses.h>
 
 #include "rawdraw.h"
@@ -26,13 +27,14 @@ int32_t main(int argc, char* argv[]) {
   }
   image_t img = {.buffer=buffer, .w=WIDTH, .h=HEIGHT};
 
-  char ch=' ';
+  wchar_t ch=' ';
   init_ncurses();
   while( ch != 'q' ) {
       draw_frame(img);
       for (int32_t i=0; i < img.w; i++){
         for (int32_t j=0; j < img.h; j++){
           ch='#';
+          //ch=L'\u28FF';
           int8_t col_pair=1;
           switch(img.buffer[rawdraw_get_i(img, i, j)]){
             case WHITE:   col_pair=1; break;
@@ -45,7 +47,10 @@ int32_t main(int argc, char* argv[]) {
             case BLACK:   ch=' ';     break;
           };
           attron(COLOR_PAIR(col_pair));
-          mvaddch(j,i, ch|A_BOLD);
+          //mvaddch(j,i, ch|A_BOLD);
+          mvaddstr(j, i, "\xE2\xA3\xBF");
+          //mvaddstr(j, i, "\x28\xFF");
+          //mvaddstr(j, i, "\xE2\xAF\x86");
         }
       }
       refresh();
@@ -72,6 +77,8 @@ void draw_frame(image_t img){
 
 void init_ncurses(){
   initscr();
+  //setlocale(LC_CTYPE,"C-UTF-8");
+  setlocale(LC_ALL, "C.utf8");
   start_color();
   cbreak();
   keypad(stdscr, true);
