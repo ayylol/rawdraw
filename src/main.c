@@ -56,7 +56,7 @@ int s=0;
 int s1=100;
 bool growing=true;
 void draw_frame(image_t img){
-  rawdraw_fill(img, BLACK);
+  rawdraw_fill(img, X000_BLACK);
   ivec3_t quad[6*6]={
     // FRONT
     {.x=-1,.y=-1,.z=1}, {.x=1,.y=-1,.z=1}, {.x=1,.y=1,.z=1},  
