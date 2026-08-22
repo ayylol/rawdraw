@@ -8,9 +8,7 @@
 
 // PRIVATE FUNCTION IMPLEMENTATIONS
 static inline void rawdraw_swap_points(point_t* p1, point_t* p2){
-  point_t temp_p=*p1;
-  *p1=*p2;
-  *p2=temp_p;
+  point_t temp_p=*p1; *p1=*p2; *p2=temp_p;
 }
 
 // PUBLIC FUNCTION IMPLEMENTATIONS
@@ -117,37 +115,70 @@ void rawdraw_line(image_t img, point_t p1, point_t p2, color_t col){
   }
 }
 
-color_t colors[256] = {
-  X000_BLACK, X001_MAROON, X002_GREEN, X003_OLIVE, X004_NAVY, X005_PURPLE, X006_TEAL, X007_SILVER,
-  X008_GREY, X009_RED, X010_LIME, X011_YELLOW, X012_BLUE, X013_FUCHSIA, X014_AQUA, X015_WHITE,
-  x016_Grey0, x017_NavyBlue, x018_DarkBlue, x019_Blue3, x020_Blue3, x021_Blue1, x022_DarkGreen, x023_DeepSkyBlue4,
-  x024_DeepSkyBlue4, x025_DeepSkyBlue4, x026_DodgerBlue3, x027_DodgerBlue2, x028_Green4, x029_SpringGreen4, x030_Turquoise4, x031_DeepSkyBlue3,
-  x032_DeepSkyBlue3, x033_DodgerBlue1, x034_Green3, x035_SpringGreen3, x036_DarkCyan, x037_LightSeaGreen, x038_DeepSkyBlue2, x039_DeepSkyBlue1,
-  x040_Green3, x041_SpringGreen3, x042_SpringGreen2, x043_Cyan3, x044_DarkTurquoise, x045_Turquoise2, x046_Green1, x047_SpringGreen2,
-  x048_SpringGreen1, x049_MediumSpringGreen, x050_Cyan2, x051_Cyan1, x052_DarkRed, x053_DeepPink4, x054_Purple4, x055_Purple4,
-  x056_Purple3, x057_BlueViolet, x058_Orange4, x059_Grey37, x060_MediumPurple4, x061_SlateBlue3, x062_SlateBlue3, x063_RoyalBlue1,
-  x064_Chartreuse4, x065_DarkSeaGreen4, x066_PaleTurquoise4, x067_SteelBlue, x068_SteelBlue3, x069_CornflowerBlue, x070_Chartreuse3, x071_DarkSeaGreen4,
-  x072_CadetBlue, x073_CadetBlue, x074_SkyBlue3, x075_SteelBlue1, x076_Chartreuse3, x077_PaleGreen3, x078_SeaGreen3, x079_Aquamarine3,
-  x080_MediumTurquoise, x081_SteelBlue1, x082_Chartreuse2, x083_SeaGreen2, x084_SeaGreen1, x085_SeaGreen1, x086_Aquamarine1, x087_DarkSlateGray2,
-  x088_DarkRed, x089_DeepPink4, x090_DarkMagenta, x091_DarkMagenta, x092_DarkViolet, x093_Purple, x094_Orange4, x095_LightPink4,
-  x096_Plum4, x097_MediumPurple3, x098_MediumPurple3, x099_SlateBlue1, x100_Yellow4, x101_Wheat4, x102_Grey53, x103_LightSlateGrey,
-  x104_MediumPurple, x105_LightSlateBlue, x106_Yellow4, x107_DarkOliveGreen3, x108_DarkSeaGreen, x109_LightSkyBlue3, x110_LightSkyBlue3, x111_SkyBlue2,
-  x112_Chartreuse2, x113_DarkOliveGreen3, x114_PaleGreen3, x115_DarkSeaGreen3, x116_DarkSlateGray3, x117_SkyBlue1, x118_Chartreuse1, x119_LightGreen,
-  x120_LightGreen, x121_PaleGreen1, x122_Aquamarine1, x123_DarkSlateGray1, x124_Red3, x125_DeepPink4, x126_MediumVioletRed, x127_Magenta3,
-  x128_DarkViolet, x129_Purple, x130_DarkOrange3, x131_IndianRed, x132_HotPink3, x133_MediumOrchid3, x134_MediumOrchid, x135_MediumPurple2,
-  x136_DarkGoldenrod, x137_LightSalmon3, x138_RosyBrown, x139_Grey63, x140_MediumPurple2, x141_MediumPurple1, x142_Gold3, x143_DarkKhaki,
-  x144_NavajoWhite3, x145_Grey69, x146_LightSteelBlue3, x147_LightSteelBlue, x148_Yellow3, x149_DarkOliveGreen3, x150_DarkSeaGreen3, x151_DarkSeaGreen2,
-  x152_LightCyan3, x153_LightSkyBlue1, x154_GreenYellow, x155_DarkOliveGreen2, x156_PaleGreen1, x157_DarkSeaGreen2, x158_DarkSeaGreen1, x159_PaleTurquoise1,
-  x160_Red3, x161_DeepPink3, x162_DeepPink3, x163_Magenta3, x164_Magenta3, x165_Magenta2, x166_DarkOrange3, x167_IndianRed,
-  x168_HotPink3, x169_HotPink2, x170_Orchid, x171_MediumOrchid1, x172_Orange3, x173_LightSalmon3, x174_LightPink3, x175_Pink3,
-  x176_Plum3, x177_Violet, x178_Gold3, x179_LightGoldenrod3, x180_Tan, x181_MistyRose3, x182_Thistle3, x183_Plum2,
-  x184_Yellow3, x185_Khaki3, x186_LightGoldenrod2, x187_LightYellow3, x188_Grey84, x189_LightSteelBlue1, x190_Yellow2, x191_DarkOliveGreen1,
-  x192_DarkOliveGreen1, x193_DarkSeaGreen1, x194_Honeydew2, x195_LightCyan1, x196_Red1, x197_DeepPink2, x198_DeepPink1, x199_DeepPink1,
-  x200_Magenta2, x201_Magenta1, x202_OrangeRed1, x203_IndianRed1, x204_IndianRed1, x205_HotPink, x206_HotPink, x207_MediumOrchid1,
-  x208_DarkOrange, x209_Salmon1, x210_LightCoral, x211_PaleVioletRed1, x212_Orchid2, x213_Orchid1, x214_Orange1, x215_SandyBrown,
-  x216_LightSalmon1, x217_LightPink1, x218_Pink1, x219_Plum1, x220_Gold1, x221_LightGoldenrod2, x222_LightGoldenrod2, x223_NavajoWhite1,
-  x224_MistyRose1, x225_Thistle1, x226_Yellow1, x227_LightGoldenrod1, x228_Khaki1, x229_Wheat1, x230_Cornsilk1, x231_Grey100,
-  x232_Grey3, x233_Grey7, x234_Grey11, x235_Grey15, x236_Grey19, x237_Grey23, x238_Grey27, x239_Grey30,
-  x240_Grey35, x241_Grey39, x242_Grey42, x243_Grey46, x244_Grey50, x245_Grey54, x246_Grey58, x247_Grey62,
-  x248_Grey66, x249_Grey70, x250_Grey74, x251_Grey78, x252_Grey82, x253_Grey85, x254_Grey89, x255_Grey93,
+uint32_t colors[NUM_COLORS] =
+{
+  // xterm default colors.
+  0x000000, // COLOR_BLACK
+  0xcd0000, // COLOR_BLUE
+  0x00cd00, // COLOR_GREEN
+  0xcdcd00, // COLOR_CYAN
+  0x0000cd, // COLOR_RED
+  0xcd00cd, // COLOR_MAGENTA
+  0x00cdcd, // COLOR_YELLOW
+  0xe5e5e5, // COLOR_WHITE
+  0x4d4d4d, // HI COLOR_BLACK
+  0xff0000, // HI COLOR_BLUE
+  0x00ff00, // HI COLOR_GREEN
+  0xffff00, // HI COLOR_CYAN
+  0x0000ff, // HI COLOR_RED
+  0xff00ff, // HI COLOR_MAGENTA
+  0x00ffff, // HI COLOR_YELLOW
+  0xffffff, // HI COLOR_WHITE
+
+  // Netscape palette
+  0x000000, 0x000033, 0x000066, 0x000099, 0x0000CC, 0x0000FF,
+  0x003300, 0x003333, 0x003366, 0x003399, 0x0033CC, 0x0033FF,
+  0x006600, 0x006633, 0x006666, 0x006699, 0x0066CC, 0x0066FF,
+  0x009900, 0x009933, 0x009966, 0x009999, 0x0099CC, 0x0099FF,
+  0x00CC00, 0x00CC33, 0x00CC66, 0x00CC99, 0x00CCCC, 0x00CCFF,
+  0x00FF00, 0x00FF33, 0x00FF66, 0x00FF99, 0x00FFCC, 0x00FFFF,
+  0x330000, 0x330033, 0x330066, 0x330099, 0x3300CC, 0x3300FF,
+  0x333300, 0x333333, 0x333366, 0x333399, 0x3333CC, 0x3333FF,
+  0x336600, 0x336633, 0x336666, 0x336699, 0x3366CC, 0x3366FF,
+  0x339900, 0x339933, 0x339966, 0x339999, 0x3399CC, 0x3399FF,
+  0x33CC00, 0x33CC33, 0x33CC66, 0x33CC99, 0x33CCCC, 0x33CCFF,
+  0x33FF00, 0x33FF33, 0x33FF66, 0x33FF99, 0x33FFCC, 0x33FFFF,
+  0x660000, 0x660033, 0x660066, 0x660099, 0x6600CC, 0x6600FF,
+  0x663300, 0x663333, 0x663366, 0x663399, 0x6633CC, 0x6633FF,
+  0x666600, 0x666633, 0x666666, 0x666699, 0x6666CC, 0x6666FF,
+  0x669900, 0x669933, 0x669966, 0x669999, 0x6699CC, 0x6699FF,
+  0x66CC00, 0x66CC33, 0x66CC66, 0x66CC99, 0x66CCCC, 0x66CCFF,
+  0x66FF00, 0x66FF33, 0x66FF66, 0x66FF99, 0x66FFCC, 0x66FFFF,
+  0x990000, 0x990033, 0x990066, 0x990099, 0x9900CC, 0x9900FF,
+  0x993300, 0x993333, 0x993366, 0x993399, 0x9933CC, 0x9933FF,
+  0x996600, 0x996633, 0x996666, 0x996699, 0x9966CC, 0x9966FF,
+  0x999900, 0x999933, 0x999966, 0x999999, 0x9999CC, 0x9999FF,
+  0x99CC00, 0x99CC33, 0x99CC66, 0x99CC99, 0x99CCCC, 0x99CCFF,
+  0x99FF00, 0x99FF33, 0x99FF66, 0x99FF99, 0x99FFCC, 0x99FFFF,
+  0xCC0000, 0xCC0033, 0xCC0066, 0xCC0099, 0xCC00CC, 0xCC00FF,
+  0xCC3300, 0xCC3333, 0xCC3366, 0xCC3399, 0xCC33CC, 0xCC33FF,
+  0xCC6600, 0xCC6633, 0xCC6666, 0xCC6699, 0xCC66CC, 0xCC66FF,
+  0xCC9900, 0xCC9933, 0xCC9966, 0xCC9999, 0xCC99CC, 0xCC99FF,
+  0xCCCC00, 0xCCCC33, 0xCCCC66, 0xCCCC99, 0xCCCCCC, 0xCCCCFF,
+  0xCCFF00, 0xCCFF33, 0xCCFF66, 0xCCFF99, 0xCCFFCC, 0xCCFFFF,
+  0xFF0000, 0xFF0033, 0xFF0066, 0xFF0099, 0xFF00CC, 0xFF00FF,
+  0xFF3300, 0xFF3333, 0xFF3366, 0xFF3399, 0xFF33CC, 0xFF33FF,
+  0xFF6600, 0xFF6633, 0xFF6666, 0xFF6699, 0xFF66CC, 0xFF66FF,
+  0xFF9900, 0xFF9933, 0xFF9966, 0xFF9999, 0xFF99CC, 0xFF99FF,
+  0xFFCC00, 0xFFCC33, 0xFFCC66, 0xFFCC99, 0xFFCCCC, 0xFFCCFF,
+  0xFFFF00, 0xFFFF33, 0xFFFF66, 0xFFFF99, 0xFFFFCC, 0xFFFFFF,
+
+  // Shades of gray
+  0x080808, 0x121212, 0x1C1C1C, 0x262626,
+  0x303030, 0x3A3A3A, 0x444444, 0x4E4E4E,
+  0x585858, 0x626262, 0x6C6C6C, 0x767676,
+  0x808080, 0x8A8A8A, 0x949494, 0x9E9E9E,
+  0xA8A8A8, 0xB2B2B2, 0xBCBCBC, 0xC6C6C6,
+  0xD0D0D0, 0xDADADA, 0xE4E4E4, 0xEEEEEE,
+
 };
