@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define PIXEL_WIDTH 284
-#define PIXEL_HEIGHT 160
+#define PIXEL_WIDTH 152*2
+#define PIXEL_HEIGHT 43*4
 uint32_t g_pixel_buffer[PIXEL_WIDTH*PIXEL_HEIGHT];
 canvas_t g_canvas = {g_pixel_buffer, PIXEL_WIDTH, PIXEL_HEIGHT};
 
@@ -39,6 +39,7 @@ void init_ncurses(){
   nodelay(stdscr, TRUE);
   keypad(stdscr, TRUE);
   set_escdelay(0);
+  curs_set(0);
 
   // For mouse movement
   // https://gist.github.com/sylt/93d3f7b77e7f3a881603
@@ -57,6 +58,7 @@ void init_ncurses(){
 
 void draw_frame(canvas_t canvas){
   rawdraw_fill(canvas, g_color_palette[16]);
+  /*
   point_t tri[3];
   for (int i=0; i<1; i++){
     for (int j=0; j<3; j++){
@@ -66,6 +68,13 @@ void draw_frame(canvas_t canvas){
     }
     rawdraw_tri(canvas, tri[0], tri[1], tri[2], g_color_palette[154]);
   }
+  */
+  point_t tri[3] = {
+    (point_t){canvas.w/2,25},
+    (point_t){3*canvas.w/4,canvas.h-25},
+    (point_t){canvas.w/4,canvas.h-25},
+  };
+  rawdraw_tri(canvas, tri[0], tri[1], tri[2], g_color_palette[154]);
 }
 
 void present(canvas_t canvas){
@@ -74,23 +83,28 @@ void present(canvas_t canvas){
   // TODO: ASSERT THE SIZE IS FINE
   for (int32_t x=0; x<terminal_width; x++){
     for (int32_t y=0; y<terminal_height; y++){
+      // NOTE: !!! Ordered in the same manner as the unicode braille characters !!!
       uint32_t is_color0 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+0)];
-      uint32_t is_color1 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+0)];
-      uint32_t is_color2 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+1)];
-      uint32_t is_color3 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+1)];
-      uint32_t is_color4 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+2)];
+      uint32_t is_color1 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+1)];
+      uint32_t is_color2 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+2)];
+      uint32_t is_color3 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+0)];
+      uint32_t is_color4 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+1)];
       uint32_t is_color5 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+2)];
       uint32_t is_color6 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+3)];
       uint32_t is_color7 = 0 != canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+3)];
-      if (is_color0 || is_color1 || is_color2 || is_color3 || is_color4 || is_color5 || is_color6 || is_color7) {
-          attron(COLOR_PAIR(154));
-          uint8_t braille_char[3]={0xE2, 0xA3, 0xBF};
-          mvaddstr(y, x, (const char *)braille_char);
-      } else {
-          attron(COLOR_PAIR(17));
-          uint8_t braille_char[3]={0xE2, 0xA0, 0x81};
-          mvaddstr(y, x, (const char *)braille_char);
-      }
+      // Get Byte Representing Bit Pattern
+      uint8_t bit_pattern =
+        is_color0 << 0 | is_color3 << 3 |
+        is_color1 << 1 | is_color4 << 4 |
+        is_color2 << 2 | is_color5 << 5 |
+        is_color6 << 6 | is_color7 << 7;
+      // Convert Bit Pattern to Appropriate UTF-8 Encoding
+      uint8_t braille_char[4]={};
+      braille_char[0] = 0xE2;
+      braille_char[1] = 0xA0 | (bit_pattern >> 6);
+      braille_char[2] = 0x80 | (bit_pattern & 0x3F);
+      attron(COLOR_PAIR(154));
+      mvaddstr(y, x, (const char *)braille_char);
     }
   }
 }
