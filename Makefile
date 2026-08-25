@@ -3,7 +3,7 @@ TARGET:=rawdraw
 # Compiler Stuff
 CC:=gcc
 CFLAGS=$(WARNFLAGS) $(LIBFLAGS)
-WARNFLAGS:=-Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable
+WARNFLAGS:=-Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
 DBGFLAGS:=-g
 RLSFLAGS:=-O2
 LIBFLAGS:=-lncursesw
