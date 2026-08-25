@@ -25,15 +25,15 @@ void load_ppm(uint32_t *buffer, const char* path);
 int32_t main(int argc, char* argv[]) {
   //draw_frame(g_canvas);
   rawdraw_fill(g_canvas, g_color_palette[16]);
-  load_ppm(g_canvas.buffer, "./doom.ppm");
+  //load_ppm(g_canvas.buffer, "./doom.ppm");
   //save_ppm(g_canvas.buffer, g_canvas.w, g_canvas.h);
   init_ncurses();
   int32_t count=0;
   while (1) {
-    //draw_frame(g_canvas);
+    draw_frame(g_canvas);
     present(g_canvas);
     refresh();
-    usleep(20*16000);
+    usleep(300*16000);
   }
   destroy_ncurses();
 }
@@ -67,23 +67,23 @@ void init_ncurses(){
 
 void draw_frame(canvas_t canvas){
   rawdraw_fill(canvas, g_color_palette[16]);
-  /*
   point_t tri[3];
-  for (int i=0; i<1; i++){
+  for (int i=0; i<3; i++){
     for (int j=0; j<3; j++){
       int32_t x = rand()%canvas.w;
       int32_t y = rand()%canvas.h;
       tri[j]=(point_t){.x=x,.y=y};
     }
-    rawdraw_tri(canvas, tri[0], tri[1], tri[2], g_color_palette[154]);
+    rawdraw_tri(canvas, tri[0], tri[1], tri[2], g_color_palette[rand()%216+16]);
   }
-  */
+  /*
   point_t tri[3] = {
     (point_t){canvas.w/2,25},
     (point_t){3*canvas.w/4,canvas.h-25},
     (point_t){canvas.w/4,canvas.h-25},
   };
   rawdraw_tri(canvas, tri[0], tri[1], tri[2], g_color_palette[154]);
+  */
 }
 
 void present(canvas_t canvas){
@@ -115,6 +115,11 @@ void present(canvas_t canvas){
       braille_char[2] = 0x80 | (bit_pattern & 0x3F);
       // Average Color
       uint32_t color_count = is_color0 + is_color1 + is_color2 + is_color3 + is_color4 + is_color5 + is_color6 + is_color7;
+      if (color_count == 0) {
+        mvaddch(y, x, ' ');
+        continue;
+      }
+
       uint32_t color0 = canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+0)];
       uint32_t color1 = canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+1)];
       uint32_t color2 = canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+2)];
