@@ -1,4 +1,5 @@
 #include "rawdraw.h"
+#include "linalg.h"
 #include <assert.h>
 #include <string.h> // TODO: REMEMBER TO REMOVE THIS SHIT !!!!
 #include <stdint.h>
@@ -8,34 +9,33 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define PIXEL_WIDTH 152*2
+//#define PIXEL_WIDTH 152*2
+#define PIXEL_WIDTH 43*2*2
 #define PIXEL_HEIGHT 43*4
 uint32_t g_pixel_buffer[PIXEL_WIDTH*PIXEL_HEIGHT];
 canvas_t g_canvas = {g_pixel_buffer, PIXEL_WIDTH, PIXEL_HEIGHT};
 
 void init_ncurses();
 void init_color_rgb(int32_t id, uint32_t rgb);
-void destroy_ncurses();
+void ncurses_destroy();
 void drain_events();
 void draw_frame(canvas_t canvas);
-void present(canvas_t canvas);
+void ncurses_present(canvas_t canvas);
 void save_ppm(uint32_t *buffer, uint32_t width, uint32_t height);
 void load_ppm(uint32_t *buffer, const char* path);
 
+// TODO: Make this a proper game loop by enforcing framerate, and capturing input!!!
 int32_t main(int argc, char* argv[]) {
-  //draw_frame(g_canvas);
   rawdraw_fill(g_canvas, g_color_palette[16]);
-  //load_ppm(g_canvas.buffer, "./doom.ppm");
-  //save_ppm(g_canvas.buffer, g_canvas.w, g_canvas.h);
   init_ncurses();
   int32_t count=0;
   while (1) {
     draw_frame(g_canvas);
-    present(g_canvas);
+    ncurses_present(g_canvas);
     refresh();
-    usleep(300*16000);
+    usleep(1000*16);
   }
-  destroy_ncurses();
+  ncurses_destroy();
 }
 
 void init_ncurses(){
@@ -65,28 +65,35 @@ void init_ncurses(){
   clear();
 }
 
+vec3_t vertices[8] = {
+  (vec3_t){0.5f,   0.5f,  0.5f},
+  (vec3_t){0.5f,   -0.5f, 0.5f},
+  (vec3_t){-0.5f,  0.5f,  0.5f},
+  (vec3_t){-0.5f,  -0.5f, 0.5f},
+
+  (vec3_t){0.5f,   0.5f,  -0.5f},
+  (vec3_t){0.5f,   -0.5f, -0.5f},
+  (vec3_t){-0.5f,  0.5f,  -0.5f},
+  (vec3_t){-0.5f,  -0.5f, -0.5f},
+};
+float d_angle=0.f;
+// TODO: Draw a 3D rotating object!
 void draw_frame(canvas_t canvas){
   rawdraw_fill(canvas, g_color_palette[16]);
-  point_t tri[3];
-  for (int i=0; i<3; i++){
-    for (int j=0; j<3; j++){
-      int32_t x = rand()%canvas.w;
-      int32_t y = rand()%canvas.h;
-      tri[j]=(point_t){.x=x,.y=y};
-    }
-    rawdraw_tri(canvas, tri[0], tri[1], tri[2], g_color_palette[rand()%216+16]);
-  }
-  /*
-  point_t tri[3] = {
-    (point_t){canvas.w/2,25},
-    (point_t){3*canvas.w/4,canvas.h-25},
-    (point_t){canvas.w/4,canvas.h-25},
+
+  ivec2_t transformed_vertices[8]={
   };
-  rawdraw_tri(canvas, tri[0], tri[1], tri[2], g_color_palette[154]);
-  */
+  for (int32_t i=0; i<8; i++){
+    transformed_vertices[i]=to_screen(project(
+          add_vec3(rotate_xz(vertices[i],d_angle),(vec3_t){0,0,1.5f})),
+        (ivec2_t){.x=canvas.w, .y=canvas.h});
+    rawdraw_point(canvas, (point_t){transformed_vertices[i].x, transformed_vertices[i].y}, 2, g_color_palette[154]);
+  }
+  d_angle+=0.01f;
 }
 
-void present(canvas_t canvas){
+// TODO: Move this to an ncurses specific file
+void ncurses_present(canvas_t canvas){
   int32_t terminal_width=canvas.w/2;
   int32_t terminal_height=canvas.h/4;
   assert(terminal_width*2==canvas.w);
@@ -115,6 +122,7 @@ void present(canvas_t canvas){
       braille_char[2] = 0x80 | (bit_pattern & 0x3F);
       // Average Color
       uint32_t color_count = is_color0 + is_color1 + is_color2 + is_color3 + is_color4 + is_color5 + is_color6 + is_color7;
+      // Avoid division by zero
       if (color_count == 0) {
         mvaddch(y, x, ' ');
         continue;
@@ -129,7 +137,7 @@ void present(canvas_t canvas){
       uint32_t color6 = canvas.buffer[rawdraw_get_i(canvas, (x*2)+0, (y*4)+3)];
       uint32_t color7 = canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+3)];
 
-      uint32_t channel_averages[3] = {
+      uint8_t channel_averages[3] = {
         (rawdraw_channel_red(color0) + rawdraw_channel_red(color1) +
          rawdraw_channel_red(color2) + rawdraw_channel_red(color3) +
          rawdraw_channel_red(color4) + rawdraw_channel_red(color5) +
@@ -158,13 +166,9 @@ void present(canvas_t canvas){
         else if (channel_averages[i] < 0x19*9) { channel_indexes[i]=4; }
         else                                   { channel_indexes[i]=5; }
       }
-      assert(channel_indexes[0]<=5);
-      assert(channel_indexes[1]<=5);
-      assert(channel_indexes[2]<=5);
       uint32_t color_index=(channel_indexes[0]*6*6 + channel_indexes[1]*6 + channel_indexes[2])+16;
       
       attron(COLOR_PAIR(color_index));
-
       mvaddstr(y, x, (const char *)braille_char);
     }
   }
@@ -180,7 +184,7 @@ init_color_rgb(int32_t id, uint32_t rgb) {
   init_pair(id, id, COLOR_BLACK);
 }
 
-void destroy_ncurses(){
+void ncurses_destroy(){
   printf("\033[?1003l\n"); // Disable mouse movement events, as l = low
   endwin();
 }

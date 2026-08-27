@@ -2,6 +2,7 @@
 #define INCLUDE_RAWDRAW_H_
 
 #include <stdint.h>
+#include "linalg.h"
 
 // CONSTANTS AND TYPES
 typedef struct {
@@ -35,4 +36,3 @@ static inline uint32_t rawdraw_channel_blue(color_t c)   { return (c>>8*0)&0xFF;
 extern color_t g_color_palette[COLOR_PALETTE_COUNT];
 
 #endif // INCLUDE_RAWDRAW_H_
-
