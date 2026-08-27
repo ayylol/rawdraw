@@ -67,29 +67,57 @@ void init_ncurses(){
 
 vec3_t vertices[8] = {
   (vec3_t){0.5f,   0.5f,  0.5f},
-  (vec3_t){0.5f,   -0.5f, 0.5f},
   (vec3_t){-0.5f,  0.5f,  0.5f},
+  (vec3_t){0.5f,   -0.5f, 0.5f},
   (vec3_t){-0.5f,  -0.5f, 0.5f},
 
   (vec3_t){0.5f,   0.5f,  -0.5f},
-  (vec3_t){0.5f,   -0.5f, -0.5f},
   (vec3_t){-0.5f,  0.5f,  -0.5f},
+  (vec3_t){0.5f,   -0.5f, -0.5f},
   (vec3_t){-0.5f,  -0.5f, -0.5f},
 };
+// 6 Faces, 2 Triangles per, 3 Vertices per
+int32_t indices[6*2*3] = {
+  0,1,2, 2,1,3,
+  5,4,6, 5,6,7,
+  0,2,4, 4,2,6,
+  1,5,3, 5,7,3,
+};
+int32_t face_colors[6*2]={
+  0xFF0000,
+  0x00FF00,
+
+  0x0000FF,
+  0xFF00FF,
+
+  0x00FFFF,
+  0xFFFF00,
+
+  0xCC00AA,
+  0xAACC00,
+};
 float d_angle=0.f;
+float d_z=0.f;
 // TODO: Draw a 3D rotating object!
 void draw_frame(canvas_t canvas){
   rawdraw_fill(canvas, g_color_palette[16]);
 
-  ivec2_t transformed_vertices[8]={
-  };
+  ivec2_t screen_vert[8]={ };
   for (int32_t i=0; i<8; i++){
-    transformed_vertices[i]=to_screen(project(
-          add_vec3(rotate_xz(vertices[i],d_angle),(vec3_t){0,0,1.5f})),
+    screen_vert[i]=to_screen(project(
+          add_vec3(rotate_xz(vertices[i],d_angle),(vec3_t){0,0,1.5f+d_z})),
         (ivec2_t){.x=canvas.w, .y=canvas.h});
-    rawdraw_point(canvas, (point_t){transformed_vertices[i].x, transformed_vertices[i].y}, 2, g_color_palette[154]);
   }
-  d_angle+=0.01f;
+  for (int32_t i=0; i<3*8; i+=3){
+    rawdraw_tri(canvas, 
+        (point_t){screen_vert[indices[i+0]].x, screen_vert[indices[i+0]].y},
+        (point_t){screen_vert[indices[i+1]].x, screen_vert[indices[i+1]].y},
+        (point_t){screen_vert[indices[i+2]].x, screen_vert[indices[i+2]].y},
+        face_colors[i/3]);
+  }
+  //rawdraw_point(canvas, (point_t){transformed_vertices[i].x, transformed_vertices[i].y}, 2, g_color_palette[154]);
+  d_angle+=0.025f;
+  d_z+=0.005f;
 }
 
 // TODO: Move this to an ncurses specific file
