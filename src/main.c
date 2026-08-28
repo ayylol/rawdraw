@@ -7,6 +7,7 @@
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 //#define PIXEL_WIDTH 152*2
@@ -23,17 +24,33 @@ void draw_frame(canvas_t canvas);
 void ncurses_present(canvas_t canvas);
 void save_ppm(uint32_t *buffer, uint32_t width, uint32_t height);
 void load_ppm(uint32_t *buffer, const char* path);
+struct timespec timespec_sub(struct timespec start, struct timespec end);
+void printw_timespec(struct timespec time);
 
 // TODO: Make this a proper game loop by enforcing framerate, and capturing input!!!
 int32_t main(int argc, char* argv[]) {
   rawdraw_fill(g_canvas, g_color_palette[16]);
   init_ncurses();
   int32_t count=0;
+  struct timespec last_time;
+  clock_gettime(CLOCK_TAI, &last_time);
+  struct timespec target_time = { .tv_sec = 0, .tv_nsec=16666666 };
   while (1) {
+    struct timespec curr_time;
+    clock_gettime(CLOCK_TAI, &curr_time);
+    struct timespec elapsed = timespec_sub(last_time, curr_time);
+    struct timespec sleep_time = timespec_sub(elapsed, target_time);
+    nanosleep(&sleep_time, NULL);
+    last_time=curr_time;
+
     draw_frame(g_canvas);
     ncurses_present(g_canvas);
+    move(0,0);
+    printw_timespec(elapsed);
+    move(1,0);
+    // TODO: something is still weird with this
+    printw_timespec(sleep_time);
     refresh();
-    usleep(1000*16);
   }
   ncurses_destroy();
 }
@@ -116,8 +133,8 @@ void draw_frame(canvas_t canvas){
         face_colors[i/3]);
   }
   //rawdraw_point(canvas, (point_t){transformed_vertices[i].x, transformed_vertices[i].y}, 2, g_color_palette[154]);
-  d_angle+=0.025f;
-  d_z+=0.005f;
+  d_angle+=0.01f;
+  //d_z+=0.005f;
 }
 
 // TODO: Move this to an ncurses specific file
@@ -215,6 +232,26 @@ init_color_rgb(int32_t id, uint32_t rgb) {
 void ncurses_destroy(){
   printf("\033[?1003l\n"); // Disable mouse movement events, as l = low
   endwin();
+}
+
+struct timespec timespec_sub(struct timespec start, struct timespec end){
+  struct timespec temp;
+  if ((end.tv_nsec-start.tv_nsec)<0){
+    temp.tv_sec=end.tv_sec-start.tv_sec-1;
+    temp.tv_nsec=1000000000+end.tv_nsec-start.tv_nsec;
+  } else {
+    temp.tv_sec=end.tv_sec-start.tv_sec;
+    temp.tv_nsec=end.tv_nsec-start.tv_nsec;
+  }
+  return temp;
+}
+
+void printw_timespec(struct timespec time){
+  int64_t sec=time.tv_sec;
+  int64_t msec=time.tv_nsec/1000000;
+  int64_t usec=(time.tv_nsec - msec*1000000)/1000;
+  int64_t nsec=time.tv_nsec - usec*1000 - msec*1000000;
+  printw("%lds %ldms %ldus %ldns", sec, msec, usec, nsec);
 }
 
 // NOTE: NOT DOING ANY CHECKING CUZ ITS JUST TO TEST
