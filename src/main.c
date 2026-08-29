@@ -1,6 +1,7 @@
 #include "rawdraw.h"
 #include "linalg.h"
 #include <assert.h>
+#include <bits/time.h>
 #include <string.h> // TODO: REMEMBER TO REMOVE THIS SHIT !!!!
 #include <stdint.h>
 #include <ncurses.h>
@@ -10,11 +11,17 @@
 #include <time.h>
 #include <unistd.h>
 
+// Canvas
 //#define PIXEL_WIDTH 152*2
 #define PIXEL_WIDTH 43*2*2
 #define PIXEL_HEIGHT 43*4
 uint32_t g_pixel_buffer[PIXEL_WIDTH*PIXEL_HEIGHT];
 canvas_t g_canvas = {g_pixel_buffer, PIXEL_WIDTH, PIXEL_HEIGHT};
+
+// Controls
+int32_t g_mouse_x;
+int32_t g_mouse_y;
+uint64_t g_mouse_bstate;
 
 void init_ncurses();
 void init_color_rgb(int32_t id, uint32_t rgb);
@@ -27,29 +34,32 @@ void load_ppm(uint32_t *buffer, const char* path);
 struct timespec timespec_sub(struct timespec start, struct timespec end);
 void printw_timespec(struct timespec time);
 
-// TODO: Make this a proper game loop by enforcing framerate, and capturing input!!!
 int32_t main(int argc, char* argv[]) {
   rawdraw_fill(g_canvas, g_color_palette[16]);
   init_ncurses();
   int32_t count=0;
-  struct timespec last_time;
-  clock_gettime(CLOCK_TAI, &last_time);
-  struct timespec target_time = { .tv_sec = 0, .tv_nsec=16666666 };
+  struct timespec last_time={};
+  struct timespec target_time = { .tv_sec = 0, .tv_nsec=16666666-1000000};
   while (1) {
+    // NOTE: This is kinda janky since i think it doesnt end up waking
+    // up exactly when its supposed to. Leaving it for now.
     struct timespec curr_time;
-    clock_gettime(CLOCK_TAI, &curr_time);
+    clock_gettime(CLOCK_REALTIME, &curr_time);
     struct timespec elapsed = timespec_sub(last_time, curr_time);
     struct timespec sleep_time = timespec_sub(elapsed, target_time);
     nanosleep(&sleep_time, NULL);
     last_time=curr_time;
+
+    drain_events();
 
     draw_frame(g_canvas);
     ncurses_present(g_canvas);
     move(0,0);
     printw_timespec(elapsed);
     move(1,0);
-    // TODO: something is still weird with this
-    printw_timespec(sleep_time);
+    printw("MOUSE: (%d,%d)", g_mouse_x, g_mouse_y);
+    move(2,0);
+    printw("MOUSE-BUTTON: %d", (g_mouse_bstate & BUTTON1_PRESSED)!=0);
     refresh();
   }
   ncurses_destroy();
@@ -232,6 +242,26 @@ init_color_rgb(int32_t id, uint32_t rgb) {
 void ncurses_destroy(){
   printf("\033[?1003l\n"); // Disable mouse movement events, as l = low
   endwin();
+}
+
+void drain_events() {
+  int32_t event_key = 0;
+  do {
+    event_key = getch();
+    switch (event_key){
+      case 'q':
+        ncurses_destroy();
+        exit(0);
+      case KEY_MOUSE:
+        MEVENT event;
+        if (getmouse(&event)== OK){
+          g_mouse_x=event.x;
+          g_mouse_y=event.y;
+          g_mouse_bstate=event.bstate;
+        }
+    }
+  } while(event_key != ERR);
+  return;
 }
 
 struct timespec timespec_sub(struct timespec start, struct timespec end){
