@@ -73,7 +73,7 @@ static inline vec2_t project(vec3_t a){
 
 static inline ivec2_t to_screen(vec2_t a, ivec2_t dim){
   return (ivec2_t) { 
-    .x = ((a.x+1)/2)*dim.x,
+    .x = ((dim.x-dim.y)/2.f)+((a.x+1)/2.f)*dim.y,
     .y = (1-((a.y+1)/2))*dim.y
   };
 }

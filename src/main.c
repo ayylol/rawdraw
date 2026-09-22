@@ -128,6 +128,10 @@ float d_z=0.f;
 // TODO: Draw a 3D rotating object!
 void draw_frame(canvas_t canvas){
   rawdraw_fill(canvas, g_color_palette[16]);
+  rawdraw_line(canvas, 0,0, canvas.w-1,0, g_color_palette[15]);
+  rawdraw_line(canvas, 0,0, 0,canvas.h-1, g_color_palette[15]);
+  rawdraw_line(canvas, 0,canvas.h-1, canvas.w-1,canvas.h-1, g_color_palette[15]);
+  rawdraw_line(canvas, canvas.w-1,0, canvas.w-1,canvas.h-1, g_color_palette[15]);
 
   ivec2_t screen_vert[8]={ };
   for (int32_t i=0; i<8; i++){
