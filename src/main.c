@@ -137,9 +137,9 @@ void draw_frame(canvas_t canvas){
   }
   for (int32_t i=0; i<3*8; i+=3){
     rawdraw_tri(canvas, 
-        (point_t){screen_vert[indices[i+0]].x, screen_vert[indices[i+0]].y},
-        (point_t){screen_vert[indices[i+1]].x, screen_vert[indices[i+1]].y},
-        (point_t){screen_vert[indices[i+2]].x, screen_vert[indices[i+2]].y},
+        screen_vert[indices[i+0]].x, screen_vert[indices[i+0]].y,
+        screen_vert[indices[i+1]].x, screen_vert[indices[i+1]].y,
+        screen_vert[indices[i+2]].x, screen_vert[indices[i+2]].y,
         face_colors[i/3]);
   }
   //rawdraw_point(canvas, (point_t){transformed_vertices[i].x, transformed_vertices[i].y}, 2, g_color_palette[154]);

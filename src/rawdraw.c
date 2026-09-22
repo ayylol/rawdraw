@@ -7,44 +7,65 @@
 
 
 // PRIVATE FUNCTION IMPLEMENTATIONS
-static inline void rawdraw_swap_points(point_t* p1, point_t* p2){
-  point_t temp_p=*p1; *p1=*p2; *p2=temp_p;
+void xor_swap(int *x, int *y)
+{
+  if (x == y) return;
+  *x ^= *y;
+  *y ^= *x;
+  *x ^= *y;
 }
 
 // PUBLIC FUNCTION IMPLEMENTATIONS
-void rawdraw_rect(canvas_t canvas, point_t p1, point_t p2, color_t col) {
-  // TODO: this bound checking probably needs more thought put into it,
-  // but at least it doesn't seg fault now
-  p2.x=p2.x<canvas.w ? p2.x : canvas.w-1;
-  p2.y=p2.y<canvas.h ? p2.y : canvas.h-1;
-  p1.x=p1.x>=0 ? p1.x : 0;
-  p1.y=p1.y>=0 ? p1.y : 0;
-  for (int32_t x=p1.x; x<=p2.x; x++){
-    for (int32_t y=p1.y; y<=p2.y; y++){
+void
+rawdraw_rect(
+    canvas_t canvas,
+    int32_t x0, int32_t y0,
+    int32_t x1, int32_t y1,
+    color_t col)
+{
+  x1=x1<canvas.w ? x1 : canvas.w-1;
+  y1=y1<canvas.h ? y1 : canvas.h-1;
+  x0=x0>=0 ? x0 : 0;
+  y0=y0>=0 ? y0 : 0;
+  for (int32_t x=x0; x<=x1; x++){
+    for (int32_t y=y0; y<=y1; y++){
       canvas.buffer[rawdraw_get_i(canvas, x, y)]=col;
     }
   }
 }
 
-void rawdraw_fill(canvas_t canvas, color_t col) {
-  rawdraw_rect(canvas, (point_t){0,0}, (point_t){canvas.w-1,canvas.h-1}, col);
+void
+rawdraw_fill(canvas_t canvas, color_t col)
+{
+  rawdraw_rect(canvas, 0, 0, canvas.w-1, canvas.h-1, col);
 }
 
-void rawdraw_point(canvas_t canvas, point_t p, int32_t dim, color_t col){
-  point_t p1=p;
-  p1.x-=(dim-1)/2;
-  p1.y-=(dim-1)/2;
-  point_t p2=p;
-  p2.x+=(dim-1)/2 + (dim%2 ? 0 : 1);
-  p2.y+=(dim-1)/2 + (dim%2 ? 0 : 1);
-  rawdraw_rect(canvas,p1,p2,col);
+void
+rawdraw_point(
+    canvas_t canvas,
+    int32_t x0, int32_t y0,
+    int32_t dim, color_t col) 
+{
+  x0-=(dim-1)/2;
+  y0-=(dim-1)/2;
+  int32_t x1 = x0;
+  int32_t y1 = y0;
+  x1+=(dim-1)/2 + (dim%2 ? 0 : 1);
+  y1+=(dim-1)/2 + (dim%2 ? 0 : 1);
+  rawdraw_rect(canvas,x0,y0,x1,y1,col);
 }
 
-bool is_left_of(point_t p1, point_t p2, point_t p3){
-  point_t v1=(point_t){-(p2.y-p1.y),p2.x-p1.x};
-  point_t v2=(point_t){p3.x-p1.x,p3.y-p1.y};
+bool is_left_of(
+    int32_t x0, int32_t y0,
+    int32_t x1, int32_t y1,
+    int32_t x2, int32_t y2)
+{
+  int32_t vx0 = -(y1-y0);
+  int32_t vy0 = x1-x0;
+  int32_t vx1 = x2-x0;
+  int32_t vy1 = y2-y0;
   // Take dot product
-  int32_t dot = v1.x*v2.x+v1.y*v2.y;
+  int32_t dot = vx0*vx1+vy0*vy1;
   return dot>=0;
 }
 
@@ -62,32 +83,56 @@ bool is_left_of(point_t p1, point_t p2, point_t p3){
  #define clamp(a,l,u) \
    min(max(a,l),u)    \
 
-void rawdraw_tri(canvas_t canvas, point_t p1, point_t p2, point_t p3, color_t col){
-  point_t lb = {clamp(min(min(p1.x,p2.x),p3.x),0,canvas.w-1),clamp(min(min(p1.y,p2.y),p3.y),0,canvas.h-1)};
-  point_t ub = {clamp(max(max(p1.x,p2.x),p3.x),0,canvas.w-1),clamp(max(max(p1.y,p2.y),p3.y),0,canvas.h-1)};
-  for (int32_t x=lb.x; x<ub.x; x++){
-    for (int32_t y=lb.y; y<ub.y; y++){
-      point_t p4 = (point_t){x,y};
-      bool inside=
-        (is_left_of(p1,p2,p4)&&is_left_of(p2,p3,p4)&&is_left_of(p3,p1,p4));
-        //|| !(is_left_of(p1,p2,p4)||is_left_of(p2,p3,p4)||is_left_of(p3,p1,p4));
+void rawdraw_tri(canvas_t canvas,
+    int32_t x0, int32_t y0,
+    int32_t x1, int32_t y1,
+    int32_t x2, int32_t y2,
+    color_t col)
+{
+#ifdef RAWDRAW_WIREFRAME
+  rawdraw_line(canvas, x0, y0, x1, y1, col);
+  rawdraw_line(canvas, x1, y1, x2, y2, col);
+  rawdraw_line(canvas, x2, y2, x0, y0, col);
+#else
+  int32_t x_bound_low  = clamp(min(min(x0,x1),x2),0,canvas.w-1);
+  int32_t y_bound_low  = clamp(min(min(y0,y1),y2),0,canvas.h-1);
+  int32_t x_bound_high = clamp(max(max(x0,x1),x2),0,canvas.w-1);
+  int32_t y_bound_high = clamp(max(max(y0,y1),y2),0,canvas.h-1);
+
+  for (int32_t x=x_bound_low; x<x_bound_high; x++){
+    for (int32_t y=y_bound_low; y<y_bound_high; y++){
+      bool inside = (
+          is_left_of(x0,y0, x1,y1, x,y) &&
+          is_left_of(x1,y1, x2,y2, x,y) &&
+          is_left_of(x2,y2, x0,y0, x,y));
       if (inside){ canvas.buffer[rawdraw_get_i(canvas, x, y)]=col; }
     }
   }
+#endif
 }
 
 // TODO: ADD BOUNDS CHECKING!!!!!!!!!!!
-void rawdraw_line(canvas_t canvas, point_t p1, point_t p2, color_t col){
+void rawdraw_line(canvas_t canvas,
+    int32_t x0, int32_t y0,
+    int32_t x1, int32_t y1,
+    color_t col)
+{
   bool low=true;
-  if (abs(p2.y - p1.y) < abs(p2.x - p1.x)){
-    if (p1.x > p2.x){ rawdraw_swap_points(&p1, &p2); }
+  if (abs(y1 - y0) < abs(x1 - x0)){
+    if (x0 > x1){ 
+      xor_swap(&x0, &x1);
+      xor_swap(&y0, &y1);
+    }
   }
   else {
     low=false;
-    if (p1.y > p2.y){ rawdraw_swap_points(&p1, &p2); }
+    if (y0 > y1){ 
+      xor_swap(&x0, &x1);
+      xor_swap(&y0, &y1);
+    }
   }
-  int32_t d_axis1=p2.y-p1.y;
-  int32_t d_axis2=p2.x-p1.x;
+  int32_t d_axis1=y1-y0;
+  int32_t d_axis2=x1-x0;
   if (!low) {
     int32_t temp=d_axis1;
     d_axis1=d_axis2;
@@ -98,9 +143,9 @@ void rawdraw_line(canvas_t canvas, point_t p1, point_t p2, color_t col){
     di=-1;
     d_axis1=-d_axis1;
   }
-  int32_t j = low ? p1.y : p1.x;
-  int32_t start = low ? p1.x : p1.y;
-  int32_t end = low ? p2.x : p2.y;
+  int32_t j = low ? y0 : x0;
+  int32_t start = low ? x0 : y0;
+  int32_t end = low ? x1 : y1;
   int32_t D=2*d_axis1-d_axis2;
   for (int i=start; i<end; i++){
       int32_t x = low ? i : j;

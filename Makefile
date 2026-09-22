@@ -2,11 +2,12 @@ TARGET:=rawdraw
 
 # Compiler Stuff
 CC:=gcc
-CFLAGS=$(WARNFLAGS) $(LIBFLAGS)
+CFLAGS=$(WARNFLAGS) $(LIBFLAGS) $(OPTION_FLAGS)
 WARNFLAGS:=-Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
 DBGFLAGS:=-g
 RLSFLAGS:=-O2
 LIBFLAGS:=-lncursesw -lm
+OPTION_FLAGS:=-DRAWDRAW_WIREFRAME
 
 # Directories
 SRCDIR:=src
