@@ -24,7 +24,7 @@ int32_t g_mouse_y;
 uint64_t g_mouse_bstate;
 
 void init_ncurses();
-void init_color_rgb(int32_t id, uint32_t rgb);
+void init_color_rgb(int32_t id, color_t rgb);
 void ncurses_destroy();
 void drain_events();
 void draw_frame(canvas_t canvas);
@@ -197,11 +197,6 @@ void ncurses_present(canvas_t canvas){
       uint32_t color7 = canvas.buffer[rawdraw_get_i(canvas, (x*2)+1, (y*4)+3)];
 
       uint8_t channel_averages[3] = {
-        (rawdraw_channel_red(color0) + rawdraw_channel_red(color1) +
-         rawdraw_channel_red(color2) + rawdraw_channel_red(color3) +
-         rawdraw_channel_red(color4) + rawdraw_channel_red(color5) +
-         rawdraw_channel_red(color6) + rawdraw_channel_red(color7)) / color_count,
-
         (rawdraw_channel_blue(color0) + rawdraw_channel_blue(color1) +
          rawdraw_channel_blue(color2) + rawdraw_channel_blue(color3) +
          rawdraw_channel_blue(color4) + rawdraw_channel_blue(color5) +
@@ -210,7 +205,12 @@ void ncurses_present(canvas_t canvas){
         (rawdraw_channel_green(color0) + rawdraw_channel_green(color1) +
          rawdraw_channel_green(color2) + rawdraw_channel_green(color3) +
          rawdraw_channel_green(color4) + rawdraw_channel_green(color5) +
-         rawdraw_channel_green(color6) + rawdraw_channel_green(color7)) / color_count
+         rawdraw_channel_green(color6) + rawdraw_channel_green(color7)) / color_count,
+
+        (rawdraw_channel_red(color0) + rawdraw_channel_red(color1) +
+         rawdraw_channel_red(color2) + rawdraw_channel_red(color3) +
+         rawdraw_channel_red(color4) + rawdraw_channel_red(color5) +
+         rawdraw_channel_red(color6) + rawdraw_channel_red(color7)) / color_count,
       };
       assert(channel_averages[0]<=0xFF);
       assert(channel_averages[1]<=0xFF);
@@ -225,7 +225,7 @@ void ncurses_present(canvas_t canvas){
         else if (channel_averages[i] < 0x19*9) { channel_indexes[i]=4; }
         else                                   { channel_indexes[i]=5; }
       }
-      uint32_t color_index=(channel_indexes[0]*6*6 + channel_indexes[1]*6 + channel_indexes[2])+16;
+      uint32_t color_index=(channel_indexes[0] + channel_indexes[1]*6 + channel_indexes[2]*6*6)+16;
       
       attron(COLOR_PAIR(color_index));
       mvaddstr(y, x, (const char *)braille_char);
@@ -234,10 +234,10 @@ void ncurses_present(canvas_t canvas){
 }
 
 void
-init_color_rgb(int32_t id, uint32_t rgb) {
-  uint32_t b = ((rgb & 0xff) * 1000 ) / 255;
-  uint32_t g = (((rgb >> 8) & 0xff) * 1000 ) / 255;
-  uint32_t r = (((rgb >> 16) & 0xff) * 1000 ) / 255;
+init_color_rgb(int32_t id, color_t rgb) {
+  uint32_t r = (rawdraw_channel_red(rgb) * 1000 ) / 255;
+  uint32_t g = (rawdraw_channel_green(rgb) * 1000 ) / 255;
+  uint32_t b = (rawdraw_channel_blue(rgb) * 1000 ) / 255;
 
   init_color(id, r, g, b);
   init_pair(id, id, COLOR_BLACK);
